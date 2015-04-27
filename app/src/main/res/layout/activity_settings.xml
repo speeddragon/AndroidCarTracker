@@ -14,21 +14,37 @@
         android:id="@+id/tViewServerUrl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="URL:"
-        android:textSize="25sp"
+        android:text="URL"
+        android:textSize="20sp"
         android:textStyle="bold" />
     <EditText
         android:id="@+id/serverURL"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/tViewServerUrl"
+        android:layout_marginBottom="20dp"
         android:textSize="25sp"
+        android:inputType="textUri"
         android:ems="10"/>
-
+    <TextView
+        android:id="@+id/carIdLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/serverURL"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="Car ID"/>
+    <NumberPicker
+        android:id="@+id/carIdPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/carIdLabel"
+        android:layout_marginBottom="20dp"
+        android:soundEffectsEnabled="true" />
     <Button
         android:id="@+id/btnSettingsSave"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save"
-        android:layout_below="@id/serverURL"/>
+        android:layout_below="@id/carIdPicker"/>
 </RelativeLayout>

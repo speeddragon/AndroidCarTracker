@@ -1,15 +1,17 @@
-package com.example.david.androidtest;
+package com.example.david.androidtest.activity;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Activity;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,29 +19,24 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.example.david.androidtest.alarm.GpsSenderAlarm;
+import com.example.david.androidtest.alarm.MotionSensorAlarm;
+import com.example.david.androidtest.R;
+
 import java.util.Calendar;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
     public static final String GPS_TRACKER_TOKEN = "gpstracker";
 
     protected PowerManager.WakeLock mWakeLock;
 
     SharedPreferences sharedPreferences;
-
-    final Handler myHandler = new Handler();
-
-    // GUI
-    TextView inMotion;
-    TextView inMotionSeconds;
-    TextView checkInMotion;
-    TextView checkInMotionSeconds;
-    TextView airModeLbl;
-    TextView gpsEnabledLbl;
+    MainActivityReceiver mainActivityReceiver;
 
     /**
      * Toggle screen backlight
      *
-     * @param value
+     * @param value True to enable back light
      */
     public void toggleBackLight(Boolean value) {
         if (value) {
@@ -59,15 +56,16 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mainActivityReceiver = new MainActivityReceiver();
         sharedPreferences = getSharedPreferences(MainActivity.GPS_TRACKER_TOKEN, MODE_PRIVATE);
 
-        final Activity x = this;
+        final Activity mainActivity = this;
         setContentView(R.layout.activity_main);
 
-        // Disable backlight always on
+        // Disable back light always on
         toggleBackLight(false);
 
-        // Backlight
+        // Back light
         ToggleButton toggle = (ToggleButton) findViewById(R.id.tBtnNetwork);
         toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -78,11 +76,13 @@ public class MainActivity extends Activity {
         // Alarm
         final AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        Intent intent = new Intent(this, GpsSenderAlarm.class);
-        Intent intent1 = new Intent(this, MotionSensorAlarm.class);
+        Intent gpsSenderIntent = new Intent(this, GpsSenderAlarm.class);
+        Intent motionSensorAlarmIntent = new Intent(this, MotionSensorAlarm.class);
 
-        final PendingIntent pintent = PendingIntent.getBroadcast(x, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        final PendingIntent pintent1 = PendingIntent.getBroadcast(x, 0, intent1, PendingIntent.FLAG_CANCEL_CURRENT);
+        final PendingIntent gpsSenderPendingIntent = PendingIntent.getBroadcast(mainActivity, 0,
+                gpsSenderIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        final PendingIntent motionSensorAlarmPendingIntent = PendingIntent.getBroadcast(mainActivity, 0,
+                motionSensorAlarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         // Tracker
         ToggleButton tBtnService = (ToggleButton) findViewById(R.id.tBtnService);
@@ -92,16 +92,24 @@ public class MainActivity extends Activity {
                 if (isChecked) {
                     Calendar cal = Calendar.getInstance();
 
-                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
-                            GpsSenderAlarm.ALARM_LOOP*60*1000, pintent);
+                    // Send GPS location every 30 minutes
+                    // TODO: Change this to a Server Side Setting
+                    alarm.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            cal.getTimeInMillis(),
+                            GpsSenderAlarm.ALARM_LOOP*60*1000,
+                            gpsSenderPendingIntent);
 
-                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
-                            MotionSensorAlarm.ALARM_LOOP*60*1000, pintent1);
+                    // Check for motion every 15 minutes
+                    alarm.setRepeating(AlarmManager.RTC_WAKEUP,
+                            cal.getTimeInMillis(),
+                            MotionSensorAlarm.ALARM_LOOP*60*1000,
+                            motionSensorAlarmPendingIntent);
 
                     Log.i("Tracker Toggle", "ON");
                 } else {
-                    alarm.cancel(pintent);
-                    alarm.cancel(pintent1);
+                    alarm.cancel(gpsSenderPendingIntent);
+                    alarm.cancel(motionSensorAlarmPendingIntent);
 
                     Log.i("Tracker Toggle", "OFF");
                 }
@@ -113,7 +121,7 @@ public class MainActivity extends Activity {
         tBtnBattery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                setAirMode(x, isChecked);
+                setAirMode(mainActivity, isChecked);
             }
         });
     }
@@ -121,11 +129,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        this.registerReceiver(mainActivityReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
     }
 
     @Override
     protected void onPause() {
+
         super.onPause();
+
+        this.unregisterReceiver(mainActivityReceiver);
     }
 
     @Override
@@ -148,6 +160,7 @@ public class MainActivity extends Activity {
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -163,5 +176,13 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         intent.putExtra("state", !isEnabled);
         sendBroadcast(intent);
+    }
+
+    private final class MainActivityReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent){
+            TextView accText = (TextView) findViewById(R.id.accText);
+            accText.setText(intent.getStringExtra("accelerometer"));
+        }
     }
 }

@@ -110,9 +110,14 @@ public class WebClient {
     /**
      * Insert log
      *
+     * @param url URL of the web application
+     * @param carId Car ID
      * @throws Exception
+     * @return bool
      */
-    public static Boolean insertLocationLog(String url, String carId, String latitude, String longitude) throws Exception {
+    public static Boolean insertLocationLog(String url, String carId, String latitude,
+                                            String longitude)
+            throws Exception {
 
         List<NameValuePair> postData = new ArrayList<NameValuePair>();
         postData.add(new BasicNameValuePair("carId", carId));
@@ -121,9 +126,17 @@ public class WebClient {
 
         String content = makeRequest(url, postData);
 
+        // TODO: Check if the operation was successful
+
         return true;
     }
 
+    /**
+     * Get server settings
+     *
+     * @param url URL of the web application
+     * @return
+     */
     public static ServerSettings getServerSettings(String url) {
         ServerSettings serverSettings = new ServerSettings();
 
@@ -144,6 +157,11 @@ public class WebClient {
         return serverSettings;
     }
 
+    /**
+     * Modified HTTP Client to ignore self certificates warning
+     * TODO: Remove on the final version
+     * @return HttpClient
+     */
     public static HttpClient getHttpClient() {
 
         DefaultHttpClient client = null;

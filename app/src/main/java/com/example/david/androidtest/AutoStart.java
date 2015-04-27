@@ -8,6 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.david.androidtest.alarm.GpsSenderAlarm;
+import com.example.david.androidtest.alarm.MotionSensorAlarm;
+
 public class AutoStart extends BroadcastReceiver
 {
     MotionSensorAlarm motionSensorAlarm = new MotionSensorAlarm();
@@ -18,7 +21,7 @@ public class AutoStart extends BroadcastReceiver
     {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
-            //context.getSharedPreferences();
+            // For auto start mobile phones
             motionSensorAlarm.SetAlarm(context);
             gpsSenderAlarm.SetAlarm(context);
         }
