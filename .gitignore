@@ -1,10 +1,8 @@
-web/gpstracker.db
-.idea
-/local.properties
-._.DS_Store
-.DS_Store
-Thumbs.db
-*.iml
-build
 .gradle
-gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+/app/app.iml
