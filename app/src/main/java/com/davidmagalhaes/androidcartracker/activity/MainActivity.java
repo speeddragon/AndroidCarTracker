@@ -1,4 +1,4 @@
-package com.davidmagalhaes.androidcartracker;
+package com.davidmagalhaes.androidcartracker.activity;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -17,7 +17,9 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.davidmagalhaes.david.androidcartracker.R;
+import com.davidmagalhaes.androidcartracker.GpsSenderAlarm;
+import com.davidmagalhaes.androidcartracker.MotionSensorAlarm;
+import com.davidmagalhaes.androidcartracker.R;
 
 import java.util.Calendar;
 

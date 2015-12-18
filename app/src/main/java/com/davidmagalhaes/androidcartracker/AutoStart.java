@@ -7,6 +7,7 @@ package com.davidmagalhaes.androidcartracker;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 
 public class AutoStart extends BroadcastReceiver
 {
@@ -16,7 +17,13 @@ public class AutoStart extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent)
     {
-        if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
+        // TODO: This needs checking
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                "com.davidmagalhaes.androidcartracker", Context.MODE_PRIVATE);
+
+        Boolean startOnBoot = sharedPreferences.getBoolean("start_on_boot", false);
+
+        if (startOnBoot && intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
             //context.getSharedPreferences();
             motionSensorAlarm.SetAlarm(context);

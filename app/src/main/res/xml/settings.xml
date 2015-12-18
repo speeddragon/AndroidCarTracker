@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Configuration">
+        <EditTextPreference
+            android:text="Server URL"
+            android:key="serverURL"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Debug">
+        <CheckBoxPreference
+            android:text="Backlight always on"
+            android:defaultValue="false"
+            android:checked="false"
+            android:key="backlight"/>
+        <CheckBoxPreference
+            android:text="Start on boot"
+            android:defaultValue="false"
+            android:checked="true"
+            android:key="start_on_boot"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -19,7 +19,7 @@ import android.widget.Toast;
  */
 public class GpsSenderAlarm extends BroadcastReceiver {
 
-    final static Integer ALARM_LOOP = 30;
+    public final static Integer ALARM_LOOP = 30;
 
     PowerManager pm;
     PowerManager.WakeLock wl;

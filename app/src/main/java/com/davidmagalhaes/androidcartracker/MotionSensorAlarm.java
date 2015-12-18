@@ -22,8 +22,8 @@ import android.widget.Toast;
 
 public class MotionSensorAlarm extends BroadcastReceiver
 {
-    final static Integer ALARM_END = 5;
-    final static Integer ALARM_LOOP = 15;
+    public final static Integer ALARM_END = 5;
+    public final static Integer ALARM_LOOP = 15;
 
     PowerManager pm;
     PowerManager.WakeLock wl;
