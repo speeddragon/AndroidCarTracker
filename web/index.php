@@ -34,13 +34,23 @@
 <html>
 	<head>
 		<link href='https://fonts.googleapis.com/css?family=Droid+Sans:400:700|Russo+One|Unica+One|Inconsolata|Lato:300,400,900|Oswald:400,300,700' rel='stylesheet' type='text/css'>
-
-	</head>
-	<body style="margin: 0px auto;">
-
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+    </head>
+	<body>
+		<div class="head">
 		<h1>GPS Tracker Viewer</h1>
+		</div>
+		<div class="last_positions">
+			<div>
+				<a href="viewer.php">Google Maps</a>
+			</div>
 
-		<div>
+			<?php if (is_array($last15log) && count($last15log) > 0) { ?>
+			<div>
+				Last updated <span class="updated"><?php echo round((time() - strtotime($last15log[0]['datetime']))/60, 0); ?>m</span> ago!
+			</div>
+			<?php } ?>
+
 			<h2>Last 30 positions</h2>
 			<ul>
 				<?php foreach($last15log as $entry) { ?>

@@ -1,0 +1,27 @@
+body {
+        margin: 0;
+        font-family: Lato;
+}
+.head {
+        width: 100%;
+        color: white;
+        background-color: black;
+        padding: 5px 40px;
+        margin-bottom: 20px;
+}
+
+.last_positions {
+        margin: 0 auto;
+        width: 800px;
+}
+a:link, a:visited, a:active {
+        text-decoration: none;
+        color: black;
+}
+a:hover {
+        font-weight: bold;
+}
+
+.updated {
+        color: red;
+}
