@@ -2,12 +2,14 @@ package com.davidmagalhaes.androidcartracker;
 
 /**
  * On boot of smartphone it will enable the alarms.
- * Created by David on 22/06/14.
  */
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+
+import com.davidmagalhaes.androidcartracker.alarm.GpsSenderAlarm;
+import com.davidmagalhaes.androidcartracker.alarm.MotionSensorAlarm;
 
 public class AutoStart extends BroadcastReceiver
 {
@@ -25,9 +27,11 @@ public class AutoStart extends BroadcastReceiver
 
         if (startOnBoot && intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
-            //context.getSharedPreferences();
-            motionSensorAlarm.SetAlarm(context);
+            motionSensorAlarm.setAlarm(context);
             gpsSenderAlarm.SetAlarm(context);
+        } else {
+            motionSensorAlarm.cancelAlarm(context);
+            gpsSenderAlarm.CancelAlarm(context);
         }
     }
 }

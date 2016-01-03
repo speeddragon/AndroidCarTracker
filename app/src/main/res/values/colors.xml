@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="dark_blue" type="color">#366AD3</item>
+    <item name="blue" type="color">#4688F1</item>
+    <item name="black" type="color">#000000</item>
+    <item name="dark_gray" type="color">#ff484848</item>
+    <item name="white" type="color">#FFFFFF</item>
+
+    <item name="action_bar_color" type="color">#1f2649</item>
+</resources>

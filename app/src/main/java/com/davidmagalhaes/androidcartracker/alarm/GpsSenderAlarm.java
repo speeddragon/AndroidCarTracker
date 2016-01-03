@@ -1,4 +1,4 @@
-package com.davidmagalhaes.androidcartracker;
+package com.davidmagalhaes.androidcartracker.alarm;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -14,9 +14,8 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
-/**
- * Created by David on 22/06/14.
- */
+import com.davidmagalhaes.androidcartracker.LocationLogTask;
+
 public class GpsSenderAlarm extends BroadcastReceiver {
 
     public final static Integer ALARM_LOOP = 30;
@@ -36,6 +35,8 @@ public class GpsSenderAlarm extends BroadcastReceiver {
             String serverURL = sharedPreferences.getString("serverURL", null);
 
             if (serverURL != null) {
+                Toast.makeText(alarmContext, "Sending to Server ...", Toast.LENGTH_SHORT).show();
+
                 serverURL = serverURL.concat(!serverURL.substring(serverURL.length() - 1)
                         .equals("/") ? "/" : "").concat("api.php");
 
@@ -56,12 +57,12 @@ public class GpsSenderAlarm extends BroadcastReceiver {
 
         @Override
         public void onProviderDisabled(String provider) {
-            //Toast.makeText(BroadcastReceiver.this, "GPS turned OFF", Toast.LENGTH_LONG).show();
+            Toast.makeText(alarmContext, "GPS turned OFF", Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            //Toast.makeText(context, "Gps turned ON", Toast.LENGTH_LONG).show();
+            Toast.makeText(alarmContext, "Gps turned ON", Toast.LENGTH_LONG).show();
         }
 
         @Override
@@ -81,14 +82,16 @@ public class GpsSenderAlarm extends BroadcastReceiver {
         wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
         wl.acquire();
 
+        alarmContext = context;
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        Toast.makeText(context, "GPS Sender MotionSensorAlarm", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, "Starting GPS ...", Toast.LENGTH_LONG).show();
 
         locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
 
-        locationManager.requestLocationUpdates( LocationManager.GPS_PROVIDER,
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 5000,   // 3 sec
                 10,
                 gpsListener);
@@ -99,8 +102,17 @@ public class GpsSenderAlarm extends BroadcastReceiver {
         AlarmManager am=(AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(context, GpsSenderAlarm.class);
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+
+        if (sharedPreferences == null) {
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        }
+
+        Integer gpsRepeating = Integer.valueOf(
+                sharedPreferences.getString("gpsStaticReport",
+                        GpsSenderAlarm.ALARM_LOOP.toString()));
+
         am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
-                1000 * 60 * GpsSenderAlarm.ALARM_LOOP, pi);
+                1000 * 60 * gpsRepeating, pi);
 
         Toast.makeText(context, "Set up GPS Sender Alarm!", Toast.LENGTH_LONG).show();
     }

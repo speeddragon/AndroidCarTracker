@@ -1,13 +1,11 @@
-package com.davidmagalhaes.androidcartracker;
+package com.davidmagalhaes.androidcartracker.alarm;
 
-/**
- * Created by David on 22/06/14.
- */
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -17,8 +15,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.davidmagalhaes.androidcartracker.LocationLogTask;
 
 public class MotionSensorAlarm extends BroadcastReceiver
 {
@@ -29,12 +30,15 @@ public class MotionSensorAlarm extends BroadcastReceiver
     PowerManager.WakeLock wl;
     Context alarmContext;
 
+    SharedPreferences sharedPreferences;
     long startTime, endTime;
 
     private LocationListener gpsListener = new LocationListener() {
 
         @Override
         public void onLocationChanged(Location location) {
+            initializeSharedPreferences(alarmContext);
+
             // Send to server
             LocationLogTask locationLogTask = new LocationLogTask();
             locationLogTask.execute(
@@ -44,8 +48,12 @@ public class MotionSensorAlarm extends BroadcastReceiver
 
             endTime = System.currentTimeMillis();
 
+            Integer gpsMotionReport = Integer.valueOf(
+                    sharedPreferences.getString("gpsMotionReport",
+                            MotionSensorAlarm.ALARM_END.toString()));
+
             // X minutes tracking
-            if (endTime - startTime > MotionSensorAlarm.ALARM_END * 60 * 1000 ) {
+            if ((endTime - startTime > gpsMotionReport * 60 * 1000) && wl.isHeld()) {
                 wl.release();
             }
         }
@@ -54,17 +62,19 @@ public class MotionSensorAlarm extends BroadcastReceiver
         public void onProviderDisabled(String provider) {
             Toast.makeText(alarmContext, "GPS turned OFF", Toast.LENGTH_LONG).show();
             mSensorManager.unregisterListener(accelerometerListener);
-            wl.release();
+
+            if (wl.isHeld()) {
+                wl.release();
+            }
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            Toast.makeText(alarmContext, "Gps turned ON", Toast.LENGTH_LONG).show();
+            Toast.makeText(alarmContext, "GPS turned ON", Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            // TODO Auto-generated method stub
 
         }
     };
@@ -90,8 +100,12 @@ public class MotionSensorAlarm extends BroadcastReceiver
                 Integer motion = fX + fY + fZ;
 
                 if (motion >= 2) {
+                    Toast.makeText(alarmContext, "Motion ENGAGED!", Toast.LENGTH_SHORT).show();
+
                     // Disable motion
-                    mSensorManager.unregisterListener(this);
+                    if (mSensorManager != null) {
+                        mSensorManager.unregisterListener(this);
+                    }
 
                     // GPS Setup
                     Log.i("GPS", "ENABLED");
@@ -99,9 +113,11 @@ public class MotionSensorAlarm extends BroadcastReceiver
                             .getSystemService(Context.LOCATION_SERVICE);
 
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                            10000, 10, gpsListener);
+                            10000, 1, gpsListener);
 
-                    wl.release();
+                    if (wl != null && wl.isHeld()) {
+                        wl.release();
+                    }
                 }
             }
 
@@ -112,11 +128,18 @@ public class MotionSensorAlarm extends BroadcastReceiver
 
             endTime = System.currentTimeMillis();
 
-            if (endTime - startTime > 60 * 1000) {
+            if ((endTime - startTime) > 60 * 1000) {
                 // Unregister
+                Toast.makeText(alarmContext, "Motion Sensor DISABLED!", Toast.LENGTH_SHORT).show();
                 Log.i("Sensor", "DISABLED");
-                mSensorManager.unregisterListener(this);
-                wl.release();
+
+                if (mSensorManager != null) {
+                    mSensorManager.unregisterListener(this);
+                }
+
+                if (wl != null && wl.isHeld()) {
+                    wl.release();
+                }
             }
         }
     };
@@ -141,7 +164,7 @@ public class MotionSensorAlarm extends BroadcastReceiver
         alarmContext = context;
 
         // Put here YOUR code.
-        Toast.makeText(context, "MotionSensorAlarm - Started!", Toast.LENGTH_LONG).show(); // For example
+        Toast.makeText(context, "Motion Sensor - Started!", Toast.LENGTH_LONG).show(); // For example
 
         Log.i("Sensor", "ENABLE");
 
@@ -155,22 +178,44 @@ public class MotionSensorAlarm extends BroadcastReceiver
         startTime = System.currentTimeMillis();
     }
 
-    public void SetAlarm(Context context)
+    public void setAlarm(Context context)
     {
         AlarmManager am=(AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(context, MotionSensorAlarm.class);
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+
+        initializeSharedPreferences(context);
+
+        Integer motionRepeating = Integer.valueOf(
+                sharedPreferences.getString("motionCheckInterval",
+                        MotionSensorAlarm.ALARM_LOOP.toString()));
+
         am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
-                1000 * 60 * MotionSensorAlarm.ALARM_LOOP, pi); // Millisec * Second * Minute
+                1000 * 60 * motionRepeating, pi); // Millisec * Second * Minute
 
         Toast.makeText(context, "Set up Motion Sensor Alarm!", Toast.LENGTH_LONG).show(); // For example
     }
 
-    public void CancelAlarm(Context context)
+    /**
+     * Ca
+     * @param context
+     */
+    public void cancelAlarm(Context context)
     {
         Intent intent = new Intent(context, MotionSensorAlarm.class);
         PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarmManager.cancel(sender);
+    }
+
+    /**
+     * Initialize shared preferences
+     *
+     * @param context Context
+     */
+    public void initializeSharedPreferences(Context context) {
+        if (sharedPreferences == null) {
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        }
     }
 }

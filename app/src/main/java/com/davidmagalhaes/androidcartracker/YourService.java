@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.widget.Toast;
 
+import com.davidmagalhaes.androidcartracker.alarm.MotionSensorAlarm;
+
 public class YourService extends Service
 {
     MotionSensorAlarm motionSensorAlarm = new MotionSensorAlarm();
@@ -23,7 +25,7 @@ public class YourService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
-        motionSensorAlarm.SetAlarm(YourService.this);
+        motionSensorAlarm.setAlarm(YourService.this);
         return START_STICKY;
     }
 
@@ -31,7 +33,7 @@ public class YourService extends Service
 
     public void onStart(Context context,Intent intent, int startId)
     {
-        motionSensorAlarm.SetAlarm(context);
+        motionSensorAlarm.setAlarm(context);
     }
 
     @Override

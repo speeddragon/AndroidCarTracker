@@ -25,27 +25,6 @@
         android:layout_alignLeft="@+id/textView"
         android:textSize="15sp"/>
 
-    <ToggleButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New ToggleButton"
-        android:id="@+id/tBtnNetwork"
-        android:layout_marginTop="14dp"
-        android:layout_below="@+id/accText"
-        android:layout_alignLeft="@+id/accText"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Backlight"
-        android:id="@+id/textView2"
-        android:singleLine="false"
-        android:layout_alignBaseline="@+id/tBtnNetwork"
-        android:layout_alignBottom="@+id/tBtnNetwork"
-        android:layout_toRightOf="@+id/tBtnNetwork"
-        android:layout_marginLeft="11sp"/>
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -74,7 +53,7 @@
         android:id="@+id/tBtnService"
         android:layout_marginTop="16dp"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/tBtnNetwork" />
+        android:layout_below="@+id/accText" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -84,25 +63,17 @@
         android:id="@+id/textView4"
         android:layout_alignBaseline="@+id/tBtnService"
         android:layout_alignBottom="@+id/tBtnService"
-        android:layout_alignLeft="@+id/textView2" />
+        android:layout_toRightOf="@+id/textView"
+        android:layout_toEndOf="@+id/textView" />
 
-    <ToggleButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New ToggleButton"
-        android:id="@+id/tBtnBattery"
-        android:layout_marginTop="20dp"
-        android:layout_below="@+id/tBtnService"
-        android:layout_alignParentLeft="true" />
 
-    <TextView
-        android:layout_width="wrap_content"
+    <Button
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Battery Save"
-        android:id="@+id/textView5"
-        android:layout_alignBaseline="@+id/tBtnBattery"
-        android:layout_alignBottom="@+id/tBtnBattery"
-        android:layout_alignLeft="@+id/textView4" />
+        android:id="@+id/settingsBtn"
+        android:text="Settings"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>

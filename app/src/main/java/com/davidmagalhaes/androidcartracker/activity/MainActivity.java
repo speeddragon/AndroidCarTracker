@@ -7,18 +7,20 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Activity;
-import android.os.Handler;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.davidmagalhaes.androidcartracker.GpsSenderAlarm;
-import com.davidmagalhaes.androidcartracker.MotionSensorAlarm;
+import com.davidmagalhaes.androidcartracker.alarm.GpsSenderAlarm;
+import com.davidmagalhaes.androidcartracker.alarm.MotionSensorAlarm;
 import com.davidmagalhaes.androidcartracker.R;
 
 import java.util.Calendar;
@@ -28,67 +30,43 @@ public class MainActivity extends Activity {
 
     protected PowerManager.WakeLock mWakeLock;
 
+    final MainActivity activity = this;
     SharedPreferences sharedPreferences;
-
-    final Handler myHandler = new Handler();
-
-    // GUI
-    TextView inMotion;
-    TextView inMotionSeconds;
-    TextView checkInMotion;
-    TextView checkInMotionSeconds;
-    TextView airModeLbl;
-    TextView gpsEnabledLbl;
-
-    /**
-     * Toggle screen backlight
-     *
-     * @param value
-     */
-    public void toggleBackLight(Boolean value) {
-        if (value) {
-            /* This code together with the one in onDestroy()
-             * will make the screen be always on until this Activity gets destroyed. */
-            final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-            this.mWakeLock.acquire();
-        } else {
-            if (mWakeLock != null) {
-                this.mWakeLock.release();
-            }
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        sharedPreferences = getSharedPreferences(MainActivity.GPS_TRACKER_TOKEN, MODE_PRIVATE);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        final Activity x = this;
         setContentView(R.layout.activity_main);
 
-        // Disable backlight always on
-        toggleBackLight(false);
-
         // Backlight
-        ToggleButton toggle = (ToggleButton) findViewById(R.id.tBtnNetwork);
-        toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toggleBackLight(isChecked);
-            }
-        });
+        Boolean backlight = sharedPreferences.getBoolean("backlight", false);
+        toggleBackLight(backlight);
+        if (backlight) {
+            Toast.makeText(getApplicationContext(), "Backlight always ON!", Toast.LENGTH_SHORT).show();
+        }
+
+        // Battery Saving
+        Boolean batterySaver = sharedPreferences.getBoolean("batterySaver", false);
+        setAirMode(activity, batterySaver);
+        if (batterySaver) {
+            Toast.makeText(getApplicationContext(), "Battery Saver ON!", Toast.LENGTH_SHORT).show();
+        }
 
         // Alarm
         final AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        Intent intent = new Intent(this, GpsSenderAlarm.class);
-        Intent intent1 = new Intent(this, MotionSensorAlarm.class);
+        Intent intentGps = new Intent(this, GpsSenderAlarm.class);
+        Intent intentMotionSensor = new Intent(this, MotionSensorAlarm.class);
 
-        final PendingIntent pintent = PendingIntent.getBroadcast(x, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        final PendingIntent pintent1 = PendingIntent.getBroadcast(x, 0, intent1, PendingIntent.FLAG_CANCEL_CURRENT);
+        final PendingIntent pendingIntentGps = PendingIntent.getBroadcast(activity, 0, intentGps,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+        final PendingIntent pintentIntentMotionSensor = PendingIntent.getBroadcast(activity, 0,
+                intentMotionSensor, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        // Tracker
+        // Enable Disable
         ToggleButton tBtnService = (ToggleButton) findViewById(R.id.tBtnService);
         tBtnService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
@@ -96,28 +74,36 @@ public class MainActivity extends Activity {
                 if (isChecked) {
                     Calendar cal = Calendar.getInstance();
 
-                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
-                            GpsSenderAlarm.ALARM_LOOP*60*1000, pintent);
+                    Integer gpsRepeating = Integer.valueOf(
+                            sharedPreferences.getString("gpsStaticReport",
+                                    GpsSenderAlarm.ALARM_LOOP.toString()));
+
+                    Integer motionRepeating = Integer.valueOf(
+                            sharedPreferences.getString("motionCheckInterval",
+                                    MotionSensorAlarm.ALARM_LOOP.toString()));
 
                     alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
-                            MotionSensorAlarm.ALARM_LOOP*60*1000, pintent1);
+                            gpsRepeating*60*1000, pendingIntentGps);
+
+                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
+                            motionRepeating*60*1000, pintentIntentMotionSensor);
 
                     Log.i("Tracker Toggle", "ON");
                 } else {
-                    alarm.cancel(pintent);
-                    alarm.cancel(pintent1);
+                    alarm.cancel(pendingIntentGps);
+                    alarm.cancel(pintentIntentMotionSensor);
 
                     Log.i("Tracker Toggle", "OFF");
                 }
             }
         });
 
-        // Battery Save Mode
-        ToggleButton tBtnBattery = (ToggleButton) findViewById(R.id.tBtnBattery);
-        tBtnBattery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                setAirMode(x, isChecked);
+        Button button = (Button) findViewById(R.id.settingsBtn);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(activity, SettingsActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -125,6 +111,20 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Backlight
+        Boolean backlight = sharedPreferences.getBoolean("backlight", false);
+        toggleBackLight(backlight);
+        if (backlight) {
+            Toast.makeText(getApplicationContext(), "Backlight always ON!", Toast.LENGTH_SHORT).show();
+        }
+
+        // Battery Saving
+        Boolean batterySaver = sharedPreferences.getBoolean("batterySaver", false);
+        setAirMode(activity, batterySaver);
+        if (batterySaver) {
+            Toast.makeText(getApplicationContext(), "Battery Saver ON!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -157,7 +157,13 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void setAirMode(Context context, boolean isEnabled) {
+    /**
+     * Put phone on Air Plane mode
+     *
+     * @param context
+     * @param isEnabled
+     */
+    private void setAirMode(Context context, boolean isEnabled) {
         // Toggle airplane mode.
         Settings.System.putInt(
                 context.getContentResolver(),
@@ -167,5 +173,24 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         intent.putExtra("state", !isEnabled);
         sendBroadcast(intent);
+    }
+
+    /**
+     * Toggle screen backlight
+     *
+     * @param value
+     */
+    public void toggleBackLight(Boolean value) {
+        if (value) {
+            /* This code together with the one in onDestroy()
+             * will make the screen be always on until this Activity gets destroyed. */
+            final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
+            this.mWakeLock.acquire();
+        } else {
+            if (mWakeLock != null) {
+                this.mWakeLock.release();
+            }
+        }
     }
 }

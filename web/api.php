@@ -38,10 +38,9 @@
 	// Insert log
 	$value = insert($locationLog);
 
-	// TODO: Write response in valid JSON
 	if ($value) {
-		echo 'OK';
+		echo '{"status": "OK" }';
 	} else {
-		echo 'FAIL';
+		echo '{"status": "FAIL" }';
 	}
 ?>
