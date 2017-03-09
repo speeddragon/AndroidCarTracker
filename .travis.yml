@@ -1,5 +1,7 @@
 language: android
 android:
+  components:
+    - sys-img-armeabi-v7a-android-25
   licenses:
     - 'android-sdk-preview-license-.+'
     - 'android-sdk-license-.+'
@@ -16,3 +18,8 @@ install:
   - echo y | android update sdk -u -a -t android-25
   - echo y | android update sdk -u -a -t extra-google-m2repository
   - echo y | android update sdk -u -a -t extra-android-m2repository
+
+env:
+  global:
+   # install timeout in minutes (2 minutes by default)
+    - ADB_INSTALL_TIMEOUT=8
