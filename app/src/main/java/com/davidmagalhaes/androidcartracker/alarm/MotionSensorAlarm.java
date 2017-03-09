@@ -1,11 +1,13 @@
 package com.davidmagalhaes.androidcartracker.alarm;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,13 +18,21 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.davidmagalhaes.androidcartracker.LocationLogTask;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
-public class MotionSensorAlarm extends BroadcastReceiver
-{
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class MotionSensorAlarm extends BroadcastReceiver {
     public final static Integer ALARM_END = 5;
     public final static Integer ALARM_LOOP = 15;
 
@@ -39,12 +49,41 @@ public class MotionSensorAlarm extends BroadcastReceiver
         public void onLocationChanged(Location location) {
             initializeSharedPreferences(alarmContext);
 
-            // Send to server
-            LocationLogTask locationLogTask = new LocationLogTask();
-            locationLogTask.execute(
-                    "1",
-                    String.valueOf(location.getLatitude()),
-                    String.valueOf(location.getLongitude()));
+            // Refactor, put in a utility class
+            final RequestQueue queue = Volley.newRequestQueue(MotionSensorAlarm.this.alarmContext);
+
+            String serverURL = sharedPreferences.getString("serverURL", null);
+
+            serverURL = serverURL.concat(!serverURL.substring(serverURL.length() - 1)
+                    .equals("/") ? "/" : "").concat("api.php");
+
+            JSONObject parameters = new JSONObject();
+            try {
+                parameters.put("carId", "1");
+                parameters.put("latitude", String.valueOf(location.getLatitude()));
+                parameters.put("longitude", String.valueOf(location.getLongitude()));
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                        Request.Method.POST,
+                        serverURL,
+                        null,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                            }
+                        },
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Toast.makeText(alarmContext, "Erro inesperado!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                );
+
+                queue.add(jsonObjectRequest);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
             endTime = System.currentTimeMillis();
 
@@ -85,8 +124,7 @@ public class MotionSensorAlarm extends BroadcastReceiver
         }
 
         @Override
-        public void onSensorChanged(SensorEvent event)
-        {
+        public void onSensorChanged(SensorEvent event) {
             Float x = event.values[0];
             Float y = event.values[1];
             Float z = event.values[2];
@@ -112,6 +150,20 @@ public class MotionSensorAlarm extends BroadcastReceiver
                     locationManager = (LocationManager) alarmContext
                             .getSystemService(Context.LOCATION_SERVICE);
 
+                    if (ActivityCompat.checkSelfPermission(MotionSensorAlarm.this.alarmContext,
+                            Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(MotionSensorAlarm.this.alarmContext, Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return;
+                    }
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                             10000, 1, gpsListener);
 

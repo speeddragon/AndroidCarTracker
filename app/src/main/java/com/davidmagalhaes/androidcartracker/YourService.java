@@ -1,8 +1,5 @@
 package com.davidmagalhaes.androidcartracker;
 
-/**
- * Created by David on 22/06/14.
- */
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -28,8 +25,6 @@ public class YourService extends Service
         motionSensorAlarm.setAlarm(YourService.this);
         return START_STICKY;
     }
-
-
 
     public void onStart(Context context,Intent intent, int startId)
     {

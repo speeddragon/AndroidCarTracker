@@ -103,8 +103,8 @@ public class CoreRun extends TimerTask implements Runnable {
             // Make sure internet is on
             setAirMode(false);
 
-            serverSettings = WebClient.getServerSettings(
-                    sharedPreferences.getString("serverURL", null));
+            //serverSettings = WebClient.getServerSettings(
+            ///        sharedPreferences.getString("serverURL", null));
 
             return;
         }
@@ -123,8 +123,8 @@ public class CoreRun extends TimerTask implements Runnable {
             // Get Server settings
             //sharedPreferences = PreferenceManager.getDefaultSharedPreferences();
 
-            serverSettings = WebClient.getServerSettings(
-                    sharedPreferences.getString("serverURL", null));
+            //serverSettings = WebClient.getServerSettings(
+            //        sharedPreferences.getString("serverURL", null));
 
             serverPingTimeCount = 0;
         }

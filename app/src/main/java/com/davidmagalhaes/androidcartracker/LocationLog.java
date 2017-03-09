@@ -2,9 +2,6 @@ package com.davidmagalhaes.androidcartracker;
 
 import java.util.Date;
 
-/**
- * Created by David on 01/05/14.
- */
 public class LocationLog {
     private Integer locationLogId;
     private Integer carId;

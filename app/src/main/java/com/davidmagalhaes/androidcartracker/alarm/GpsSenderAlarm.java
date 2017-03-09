@@ -1,20 +1,31 @@
 package com.davidmagalhaes.androidcartracker.alarm;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.widget.Toast;
 
-import com.davidmagalhaes.androidcartracker.LocationLogTask;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class GpsSenderAlarm extends BroadcastReceiver {
 
@@ -40,13 +51,35 @@ public class GpsSenderAlarm extends BroadcastReceiver {
                 serverURL = serverURL.concat(!serverURL.substring(serverURL.length() - 1)
                         .equals("/") ? "/" : "").concat("api.php");
 
-                // Send to server
-                LocationLogTask locationLogTask = new LocationLogTask();
-                locationLogTask.execute(
-                        serverURL,
-                        "1",
-                        String.valueOf(location.getLatitude()),
-                        String.valueOf(location.getLongitude()));
+                // Refactor, put in a utility class
+                final RequestQueue queue = Volley.newRequestQueue(GpsSenderAlarm.this.alarmContext);
+
+                JSONObject parameters = new JSONObject();
+                try {
+                    parameters.put("carId", "1");
+                    parameters.put("latitude", String.valueOf(location.getLatitude()));
+                    parameters.put("longitude", String.valueOf(location.getLongitude()));
+
+                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                            Request.Method.POST,
+                            serverURL,
+                            null,
+                            new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) { }
+                            },
+                            new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Toast.makeText(alarmContext, "Erro inesperado!", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                    );
+
+                    queue.add(jsonObjectRequest);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
                 countGpsSent++;
             }
@@ -76,8 +109,7 @@ public class GpsSenderAlarm extends BroadcastReceiver {
     private LocationManager locationManager;
 
     @Override
-    public void onReceive(Context context, Intent intent)
-    {
+    public void onReceive(Context context, Intent intent) {
         pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
         wl.acquire();
@@ -90,6 +122,19 @@ public class GpsSenderAlarm extends BroadcastReceiver {
 
         locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 5000,   // 3 sec

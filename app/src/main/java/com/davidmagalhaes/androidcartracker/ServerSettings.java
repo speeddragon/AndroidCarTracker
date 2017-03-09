@@ -1,11 +1,8 @@
 package com.davidmagalhaes.androidcartracker;
 
-/**
- * Created by David on 22/06/14.
- */
 public class ServerSettings {
-    Integer serverPingTime;
-    Boolean serverAlert;
+    private Integer serverPingTime;
+    private Boolean serverAlert;
 
     public Integer getServerPingTime() {
         return serverPingTime;
