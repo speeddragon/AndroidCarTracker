@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/speeddragon/AndroidCarTracker.svg?branch=master)](https://travis-ci.org/speeddragon/AndroidCarTracker)
+
 # Resume
 
 This is a simple android application that can be used to track a car using any type of android mobile phone.
